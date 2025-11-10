@@ -5,33 +5,160 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VEX Route Mapper</title>
 <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; padding: 20px; }
-    h1 { text-align: center; color: #4b0082; margin-bottom: 20px; }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f0f2f5;
+        color: #333;
+        padding: 20px;
+    }
 
-    #controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 10px; }
-    button { background: #4b0082; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; transition: background 0.3s; }
-    button:hover { background: #6a0dad; }
+    h1 {
+        text-align: center;
+        color: #4b0082;
+        margin-bottom: 20px;
+    }
 
-    #startingHeadingContainer { text-align: center; margin-bottom: 15px; }
-    #startingHeadingInput { width: 60px; padding: 5px 8px; border-radius: 6px; border: 1px solid #ccc; }
+    #controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
 
-    #canvasContainer { display: flex; justify-content: center; margin-bottom: 25px; }
-    canvas { border: 2px solid #4b0082; box-shadow: 0px 4px 10px rgba(0,0,0,0.2); cursor: crosshair; background: url('vex-field.png'); background-size: cover; }
+    button {
+        background: #4b0082;
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s;
+        font-weight: 500;
+    }
 
-    #pointTableContainer { width: 100%; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
-    th, td { padding: 10px 12px; text-align: center; }
-    th { background: #4b0082; color: #fff; font-size: 14px; }
+    button:hover {
+        background: #6a0dad;
+    }
+
+    /* Styled dropdown menu */
+    .dropdown-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    select.modeSelect {
+        background: #4b0082;
+        color: #fff;
+        border: none;
+        padding: 10px 40px 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s;
+        font-weight: 500;
+        appearance: none;
+        outline: none;
+        font-size: 14px;
+    }
+
+    select.modeSelect:hover {
+        background: #6a0dad;
+    }
+
+    /* Dropdown arrow */
+    .dropdown-container::after {
+        content: '▼';
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        color: white;
+        pointer-events: none;
+    }
+
+    #startingHeadingContainer {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    #startingHeadingInput {
+        width: 60px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+
+    #canvasContainer {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+
+    canvas {
+        border: 2px solid #4b0082;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+        cursor: crosshair;
+        background: url('vex-field.png');
+        background-size: cover;
+    }
+
+    #pointTableContainer {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+        padding: 10px 12px;
+        text-align: center;
+    }
+
+    th {
+        background: #4b0082;
+        color: #fff;
+        font-size: 14px;
+    }
+
     tr:nth-child(even) { background: #f9f9f9; }
     tr:hover { background: #e6e0f8; }
-    td[contenteditable="true"] { background: #fff0f5; border-radius: 4px; }
+    td[contenteditable="true"] {
+        background: #fff0f5;
+        border-radius: 4px;
+    }
 
-    select { padding: 4px 6px; border-radius: 6px; border: 1px solid #ccc; }
+    select {
+        padding: 4px 6px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
 
-    .deleteBtn { background: #ff4d4d; color: #fff; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; transition: background 0.3s; }
-    .deleteBtn:hover { background: #ff1a1a; }
+    .deleteBtn {
+        background: #ff4d4d;
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
 
-    @media (max-width: 768px) { canvas { width: 100%; height: auto; } }
+    .deleteBtn:hover {
+        background: #ff1a1a;
+    }
+
+    @media (max-width: 768px) {
+        canvas { width: 100%; height: auto; }
+    }
 </style>
 </head>
 <body>
@@ -41,8 +168,15 @@
     <button id="newRouteBtn">New Route</button>
     <button id="exportBtn">Export Route</button>
     <button id="clearBtn">Clear Route</button>
-</div>
 
+    <!-- Dropdown with styled arrow -->
+    <div class="dropdown-container">
+        <select id="modeSelect" class="modeSelect">
+            <option value="absolute" selected>Absolute Coordinates</option>
+            <option value="relative">Relative to Robot</option>
+        </select>
+    </div>
+</div>
 
 <div id="startingHeadingContainer">
     <label>Robot Starting Heading (°):
@@ -59,8 +193,8 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>X (mm)</th>
-                <th>Y (mm)</th>
+                <th>X (in)</th>
+                <th>Y (in)</th>
                 <th>Heading (°)</th>
                 <th>Speed</th>
                 <th>Direction</th>
