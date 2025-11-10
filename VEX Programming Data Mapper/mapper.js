@@ -3,7 +3,16 @@ const ctx = canvas.getContext('2d');
 const exportBtn = document.getElementById('exportBtn');
 const clearBtn = document.getElementById('clearBtn');
 const tableBody = document.querySelector('#pointTable tbody');
+
 const modeSelect = document.getElementById('modeSelect');
+// Field background selector
+const fieldSelect = document.getElementById('fieldSelect');
+fieldSelect.addEventListener('change', (e) => {
+    const selectedImage = e.target.value;
+    canvas.style.backgroundImage = `url('${selectedImage}')`;
+    canvas.style.backgroundSize = 'cover';
+});
+
 
 let points = [];
 let coordMode = 'absolute'; // 'absolute' or 'relative'
@@ -235,3 +244,4 @@ clearBtn.addEventListener('click', () => {
     tableBody.innerHTML = '';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
+
