@@ -170,14 +170,21 @@
     <button id="exportBtn">Export Route</button>
     <button id="clearBtn">Clear Route</button>
 
-    <!-- Dropdown menu -->
     <div class="dropdown-container">
         <select id="modeSelect" class="modeSelect">
             <option value="absolute" selected>Absolute Coordinates</option>
             <option value="relative">Relative to Robot</option>
         </select>
     </div>
+
+    <div class="dropdown-container">
+        <select id="fieldSelect" class="modeSelect">
+            <option value="vex-field.png" selected>Normal Field</option>
+            <option value="vex-field-match.png">Match Field</option>
+        </select>
+    </div>
 </div>
+
 
 <div id="startingHeadingContainer">
     <label>Robot Starting Heading (°):
@@ -209,4 +216,5 @@
 <script src="mapper.js"></script>
 </body>
 </html>
+
 
