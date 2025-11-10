@@ -4,8 +4,11 @@ const newRouteBtn = document.getElementById('newRouteBtn');
 const exportBtn = document.getElementById('exportBtn');
 const clearBtn = document.getElementById('clearBtn');
 const tableBody = document.querySelector('#pointTable tbody');
+const coordModeSelect = document.getElementById('coordMode'); // new dropdown
 
 let points = [];
+let coordMode = 'absolute'; // default
+let relativeOrigin = { x: 0, y: 0 };
 
 // Convert pixel <-> inches
 function pixelToInches(xPixel, yPixel) {
@@ -25,6 +28,16 @@ function inchesToPixel(xInches, yInches) {
         y: canvas.height/2 - mmY / 3600 * canvas.height
     };
 }
+
+// Coordinate mode toggle
+coordModeSelect.addEventListener('change', e => {
+    coordMode = e.target.value;
+    if (coordMode === 'relative' && points.length > 0) {
+        relativeOrigin = { x: points[0].realX, y: points[0].realY };
+    }
+    updateTable();
+    drawPointsAndLines();
+});
 
 // Add new point on canvas click
 canvas.addEventListener('click', (e) => {
@@ -46,16 +59,23 @@ canvas.addEventListener('click', (e) => {
         heading = Math.round(robotHeading);
     }
 
-    points.push({
+    // store raw world coordinates
+    const newPoint = {
         x: xPixel,
         y: yPixel,
-        realX: Math.round(realX*100)/100, // round to 2 decimals
+        realX: Math.round(realX*100)/100,
         realY: Math.round(realY*100)/100,
         heading,
         speed: 100,
         direction: 'forward'
-    });
+    };
 
+    // if this is the first point and relative mode, set relative origin
+    if (points.length === 0 && coordMode === 'relative') {
+        relativeOrigin = { x: newPoint.realX, y: newPoint.realY };
+    }
+
+    points.push(newPoint);
     updateTable();
     drawPointsAndLines();
 });
@@ -104,7 +124,16 @@ function drawPointsAndLines(){
         // Labels
         ctx.fillStyle='black';
         ctx.font='12px Arial';
-        ctx.fillText(`(${pt.realX},${pt.realY})`, pt.x+8, pt.y-8);
+
+        // If relative mode, show coords relative to origin
+        let displayX = pt.realX;
+        let displayY = pt.realY;
+        if (coordMode === 'relative') {
+            displayX = Math.round((pt.realX - relativeOrigin.x) * 100) / 100;
+            displayY = Math.round((pt.realY - relativeOrigin.y) * 100) / 100;
+        }
+
+        ctx.fillText(`(${displayX},${displayY})`, pt.x+8, pt.y-8);
         ctx.fillText(`H:${pt.heading}°`, pt.x+8, pt.y+12);
     });
 }
@@ -114,10 +143,18 @@ function updateTable(){
     tableBody.innerHTML='';
     points.forEach((pt,index)=>{
         const tr = document.createElement('tr');
+
+        let displayX = pt.realX;
+        let displayY = pt.realY;
+        if (coordMode === 'relative') {
+            displayX = Math.round((pt.realX - relativeOrigin.x) * 100) / 100;
+            displayY = Math.round((pt.realY - relativeOrigin.y) * 100) / 100;
+        }
+
         tr.innerHTML=`
         <td>${index+1}</td>
-        <td contenteditable="true">${pt.realX}</td>
-        <td contenteditable="true">${pt.realY}</td>
+        <td contenteditable="true">${displayX}</td>
+        <td contenteditable="true">${displayY}</td>
         <td contenteditable="true">${pt.heading}</td>
         <td contenteditable="true">${pt.speed}</td>
         <td>
@@ -140,7 +177,9 @@ function updateTable(){
 
         // Editable X
         tr.cells[1].addEventListener('blur', ()=>{
-            pt.realX = parseFloat(tr.cells[1].textContent);
+            const val = parseFloat(tr.cells[1].textContent);
+            if (coordMode === 'relative') pt.realX = relativeOrigin.x + val;
+            else pt.realX = val;
             const px = inchesToPixel(pt.realX, pt.realY);
             pt.x = px.x; pt.y = px.y;
             recalcHeading(index+1);
@@ -149,7 +188,9 @@ function updateTable(){
 
         // Editable Y
         tr.cells[2].addEventListener('blur', ()=>{
-            pt.realY = parseFloat(tr.cells[2].textContent);
+            const val = parseFloat(tr.cells[2].textContent);
+            if (coordMode === 'relative') pt.realY = relativeOrigin.y + val;
+            else pt.realY = val;
             const px = inchesToPixel(pt.realX, pt.realY);
             pt.x = px.x; pt.y = px.y;
             recalcHeading(index+1);
@@ -188,7 +229,6 @@ function recalcHeading(startIndex = 1){
         if(robotHeading<-180) robotHeading +=360;
         pt.heading = Math.round(robotHeading);
 
-        // Update table
         const row = tableBody.children[i];
         if(row) row.cells[3].textContent = pt.heading;
     }
@@ -196,13 +236,21 @@ function recalcHeading(startIndex = 1){
 
 // Export route
 exportBtn.addEventListener('click', ()=>{
-    const exportData = points.map(pt=>({
-        x: pt.realX,
-        y: pt.realY,
-        heading: pt.heading,
-        speed: pt.speed,
-        direction: pt.direction
-    }));
+    const exportData = points.map(pt=>{
+        let xOut = pt.realX;
+        let yOut = pt.realY;
+        if (coordMode === 'relative') {
+            xOut -= relativeOrigin.x;
+            yOut -= relativeOrigin.y;
+        }
+        return {
+            x: xOut,
+            y: yOut,
+            heading: pt.heading,
+            speed: pt.speed,
+            direction: pt.direction
+        };
+    });
     console.log(JSON.stringify(exportData,null,2));
     alert('Route exported to console!');
 });
